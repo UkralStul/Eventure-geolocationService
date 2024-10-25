@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "geolocationservice"
+version = "0.1.0"
+description = ""
+authors = ["UkralStul <stoyanov03@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.3"
+uvicorn = {extras = ["standart"], version = "^0.32.0"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.36"}
+pydantic-settings = "^2.6.0"
+asyncpg = "^0.30.0"
+psycopg2 = "^2.9.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+black = "^24.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
