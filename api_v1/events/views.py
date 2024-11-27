@@ -51,7 +51,7 @@ async def delete_event(
     await crud.delete_event(session=session, event=event)
 
 
-@router.get("/events_in_area/")
+@router.post("/events_in_area/")
 async def events_in_area(
     area: EventsInArea,
     session: AsyncSession = Depends(db_helper.session_dependency),

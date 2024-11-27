@@ -1,14 +1,15 @@
 from typing import List
 
 from fastapi import APIRouter, HTTPException, status, Depends
-
+from api_v1.auth import decode_access_token
 from .schemas import UserGeo
 from . import crud
-from .crud import get_users_geo
+from .crud import get_users_geo, get_users_friends_geo
 from .schemas import UserGeoUpdate
 from core.models import db_helper
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 
 router = APIRouter(tags=["userGeo"])
 
@@ -45,3 +46,14 @@ async def read_users_geo(
         )
 
     return user_geos
+
+
+@router.get("/friendsGeo")
+async def get_frinds_geo(
+    token: str,
+    user_service_url: str = settings.user_service_url,
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    return await get_users_friends_geo(
+        token=token, session=session, user_service_url=user_service_url
+    )
