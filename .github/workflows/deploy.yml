@@ -1,0 +1,38 @@
+name: CI/CD Deployment
+
+# Когда запускать пайплайн:
+on:
+  push:
+    branches:
+      - prod  # Ветка, при пуше в которую будет запускаться деплой
+
+# Описание Jobs (задач):
+jobs:
+  deploy:
+    # Указание на тип среды, в которой будет выполняться пайплайн
+    runs-on: ubuntu-latest  # Этот runner будет использоваться для выполнения пайплайна
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Используется для клонирования репозитория в runner
+
+      # Шаг 2: Настройка SSH (для доступа к серверу)
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3  # Настройка SSH-агента для авторизации
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Использование приватного ключа из Secrets GitHub
+
+      # Шаг 3: Копирование файлов на сервер
+      - name: Copy files to server (Debian)
+        run: |
+          ssh-keyscan -p 20920 185.188.181.246 >> ~/.ssh/known_hosts
+          rsync -avz -e "ssh -p 20920" --exclude='.git' ./ pitsa@185.188.181.246:~/geolocationService
+
+      # Шаг 4: Деплой приложения на сервере
+      - name: Deploy application
+        run: |
+          ssh -p 20920 pitsa@185.188.181.246 << 'EOF'  # Подключение по SSH
+          docker-compose pull  # Обновление образов Docker
+          docker-compose up -d --build  # Перезапуск контейнеров с новым кодом
+          EOF
