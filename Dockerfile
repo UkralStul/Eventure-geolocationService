@@ -4,14 +4,12 @@ FROM python:3.12.4-slim
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
-# Устанавливаем Poetry через pip
-RUN pip install --no-cache-dir poetry
+# Устанавливаем зависимости для PostgreSQL (необходимы для psycopg2)
+RUN apt-get update && apt-get install -y libpq-dev
 
-# Копируем файлы pyproject.toml и poetry.lock
-COPY pyproject.toml poetry.lock* ./
-
-# Устанавливаем зависимости через Poetry
-RUN poetry install --no-interaction
+# Копируем и устанавливаем зависимости из requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем всё приложение
 COPY . .
