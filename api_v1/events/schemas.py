@@ -19,7 +19,6 @@ class EventUpdate(EventBase):
 
 class Event(EventBase):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
 
 

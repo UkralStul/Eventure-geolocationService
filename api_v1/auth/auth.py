@@ -5,7 +5,7 @@ import jwt
 from core.config import settings
 
 
-async def decode_access_token(
+def decode_access_token(
     token: str,
     algorithm: str = settings.auth_jwt.algorithm,
     secret: str = settings.auth_jwt.secret_key,
