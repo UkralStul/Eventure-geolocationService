@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+
+from core.config import settings
 from . import crud
+from .crud import add_participant_to_event
 from .schemas import Event, EventCreate, EventUpdate, EventsInArea
 from core.models import db_helper
 from sqlalchemy.ext.asyncio import AsyncSession
 from .dependencies import event_by_id
+from ..auth import decode_access_token
 
 router = APIRouter(tags=["Events"])
 
@@ -15,11 +19,25 @@ async def get_events(
     return await crud.get_events(session=session)
 
 
-@router.get("/{event_id}/", response_model=Event)
+@router.post("/{event_id}/")
 async def get_event(
-    event: Event = Depends(event_by_id),
+    token: str,
+    event_id: int,
+    user_service_url: str = settings.user_service_url,
+    session: AsyncSession = Depends(db_helper.session_dependency),
 ):
-    return event
+    event = await crud.get_event(
+        session=session,
+        event_id=event_id,
+        user_service_url=user_service_url,
+        token=token,
+    )
+    if event is not None:
+        return event
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Event not found",
+    )
 
 
 @router.post("/", response_model=Event)
@@ -57,3 +75,15 @@ async def events_in_area(
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     return await crud.events_in_area(area=area, session=session)
+
+
+@router.post("/addParticipant/{event_id}")
+async def add_participant_to_event_view(
+    event_id: int,
+    token: str,
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    user_id = int(decode_access_token(token=token))
+    return await add_participant_to_event(
+        event_id=event_id, user_id=user_id, session=session
+    )

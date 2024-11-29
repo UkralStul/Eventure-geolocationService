@@ -1,6 +1,9 @@
+from datetime import datetime
+
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
-
+from fastapi import HTTPException, status
 from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea
 from core.models import Event
 from sqlalchemy import select
@@ -13,8 +16,37 @@ async def get_events(session: AsyncSession) -> list[Event]:
     return list(events)
 
 
-async def get_event(session: AsyncSession, event_id: int) -> Event | None:
-    return await session.get(Event, event_id)
+async def get_event(
+    session: AsyncSession,
+    event_id: int,
+    user_service_url: str,
+    token: str,
+) -> Event | None:
+    event = await session.get(Event, event_id)
+
+    participant_ids = event.participants if event.participants else []
+    print("participant_ids ", participant_ids)
+    if participant_ids:
+        headers = {"Authorization": f"Bearer {token}"}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{user_service_url}/auth/getUsersByIds",
+                headers=headers,
+                json={"ids": participant_ids},
+            )
+            if response.status_code == 200:
+                users_data = response.json()
+
+                # Обновляем участников в event, предполагая, что users_data - это список данных о пользователях
+                event.participants = users_data  # Обновляем участников
+
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to fetch users data from the microservice",
+                )
+
+    return event
 
 
 async def create_event(session: AsyncSession, event_in: EventCreate) -> Event:
@@ -56,3 +88,39 @@ async def events_in_area(
     result: Result = await session.execute(stmt)
     events = result.scalars().all()
     return list(events)
+
+
+async def add_participant_to_event(
+    event_id: int,
+    user_id: int,
+    session: AsyncSession,
+) -> Event:
+    # Получаем ивент по ID
+    stmt = select(Event).filter(Event.id == event_id)
+    result = await session.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Если participants не существует, создаем пустой список
+    if not event.participants:
+        event.participants = []
+
+    # Преобразуем participants в список, если это не так
+    participants = event.participants if isinstance(event.participants, list) else []
+
+    # Добавляем user_id в список участников, если его нет
+    if user_id not in participants:
+        participants.append(user_id)
+        event.participants = participants
+    else:
+        raise HTTPException(status_code=400, detail="User is already a participant")
+
+    # Обновляем время изменения события
+    event.updated_at = datetime.now()
+
+    # Сохраняем изменения в базе данных
+    await session.commit()
+
+    return event
