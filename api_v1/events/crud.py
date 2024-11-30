@@ -1,12 +1,16 @@
 from datetime import datetime
+from pathlib import Path
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea
 from core.models import Event
 from sqlalchemy import select
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads/avatars"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 async def get_events(session: AsyncSession) -> list[Event]:
@@ -124,3 +128,58 @@ async def add_participant_to_event(
     await session.commit()
 
     return event
+
+
+async def save_image(
+    session: AsyncSession,
+    file: UploadFile,
+    event_id: int,
+    user_id: int,
+) -> Event:
+    stmt = select(Event).filter(Event.id == event_id)
+    result = await session.execute(stmt)
+    event = result.scalar_one_or_none()
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Could not find event"
+        )
+    if not event.created_by == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You cant modify this event"
+        )
+
+    extension = file.filename.split(".")[-1]
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{event.id}_event_preview_{timestamp}.{extension}"
+    file_location = UPLOAD_DIR / filename
+
+    try:
+        with open(file_location, "wb") as buffer:
+            buffer.write(await file.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not save file: {str(e)}")
+    event.preview_picture = filename
+    try:
+        await session.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not update event: {str(e)}")
+
+    return event
+
+
+async def get_event_preview(
+    event_id: int,
+    session: AsyncSession,
+) -> Path:
+    stmt = select(Event).filter(Event.id == event_id)
+    result = await session.execute(stmt)
+    event = result.scalars().first()
+    if event:
+        if event.preview_picture:
+            return UPLOAD_DIR / event.preview_picture
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Event has no avatar"
+        )
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Could not find event"
+    )
