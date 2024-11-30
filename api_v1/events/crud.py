@@ -166,7 +166,7 @@ async def save_image(
 
     return event
 
-#deploy test
+
 async def get_event_preview(
     event_id: int,
     session: AsyncSession,
