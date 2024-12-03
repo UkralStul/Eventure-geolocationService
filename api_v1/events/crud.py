@@ -5,6 +5,8 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from fastapi import HTTPException, status, UploadFile
+from sqlalchemy.orm.attributes import flag_modified
+
 from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea
 from core.models import Event
 from sqlalchemy import select
@@ -111,19 +113,16 @@ async def add_participant_to_event(
     if not event.participants:
         event.participants = []
 
-    # Преобразуем participants в список, если это не так
-    participants = event.participants if isinstance(event.participants, list) else []
-
     # Добавляем user_id в список участников, если его нет
-    if user_id not in participants:
-        participants.append(user_id)
-        event.participants = participants
+    if user_id not in event.participants:
+        event.participants.append(user_id)
+        flag_modified(event, "participants")
     else:
         raise HTTPException(status_code=400, detail="User is already a participant")
 
     # Обновляем время изменения события
     event.updated_at = datetime.now()
-
+    session.add(event)
     # Сохраняем изменения в базе данных
     await session.commit()
 
