@@ -17,4 +17,4 @@ COPY . .
 # Открываем порт, на котором будет работать FastAPI
 EXPOSE 8001
 
-CMD ["sh", "-c", "alembic upgrade head && exec python -m main"]
+CMD ["python", "-m", "main"]
