@@ -12,6 +12,8 @@ class ConnectionManager:
     async def connect(self, user_id: str, websocket: WebSocket):
         self.active_connections[user_id] = websocket
         await websocket.accept()
+        print("connected ", websocket)
+        print("Active connections ", self.active_connections)
 
     # Отключение пользователя
     def disconnect(self, user_id: str):
