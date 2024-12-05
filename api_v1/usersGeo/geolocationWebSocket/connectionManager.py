@@ -16,7 +16,7 @@ class ConnectionManager:
         print("Active connections ", self.active_connections)
 
     # Отключение пользователя
-    def disconnect(self, user_id: int):
+    async def disconnect(self, user_id: int):
         if user_id in self.active_connections:
             del self.active_connections[user_id]
 
