@@ -30,9 +30,7 @@ async def websocket_endpoint(
     user_service_url: str = settings.user_service_url,
 ):
     # Присоединение нового пользователя
-    await websocket.accept()
-    print(f"User {user_id} connected")
-    manager.active_connections[user_id] = websocket
+    await manager.connect(user_id=user_id, websocket=websocket)
 
     try:
         while True:
@@ -74,4 +72,4 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         # Обрабатываем отключение клиента
-        del manager.active_connections[user_id]
+        await manager.disconnect(user_id=user_id)

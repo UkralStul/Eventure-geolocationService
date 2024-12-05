@@ -9,14 +9,14 @@ class ConnectionManager:
         self.active_connections: Dict[int, WebSocket] = {}
 
     # Подключение нового пользователя
-    async def connect(self, user_id: str, websocket: WebSocket):
+    async def connect(self, user_id: int, websocket: WebSocket):
         self.active_connections[user_id] = websocket
         await websocket.accept()
         print("connected ", websocket)
         print("Active connections ", self.active_connections)
 
     # Отключение пользователя
-    def disconnect(self, user_id: str):
+    def disconnect(self, user_id: int):
         if user_id in self.active_connections:
             del self.active_connections[user_id]
 
