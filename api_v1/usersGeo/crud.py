@@ -104,7 +104,7 @@ async def get_nearby_users(
     query = (
         select(
             UserGeo.user_id,
-            func.ST_Distance(
+            func.ST_DistanceSphere(
                 UserGeo.location, user_geo.location
             ).label("distance")
         )
