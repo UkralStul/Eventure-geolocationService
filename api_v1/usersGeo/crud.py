@@ -36,11 +36,12 @@ async def update_or_create_user_geo(
 async def get_users_geo(
     user_ids: list[int],
     session: AsyncSession,
-) -> list[UserGeoResponce]:
+) -> list[dict]:
     result = await session.execute(select(UserGeo).where(UserGeo.user_id.in_(user_ids)))
     user_geos = result.scalars().all()
 
-    return [UserGeoResponce.model_validate(user_geo) for user_geo in user_geos]
+    return [user_geo.to_dict() for user_geo in user_geos]
+
 
 
 async def get_friend_list(
@@ -69,12 +70,13 @@ async def get_users_friends_geo(
     token: str,
     session: AsyncSession,
     user_service_url: str,
-) -> list[UserGeoResponce]:
+) -> list[dict]:
     friend_ids = await get_friend_list(token=token, user_service_url=user_service_url)
 
     friends_geo = await get_users_geo(user_ids=friend_ids, session=session)
 
     return friends_geo
+
 
 async def get_nearby_users(
     token: str,
