@@ -14,7 +14,7 @@ from core.config import settings
 router = APIRouter(tags=["userGeo"])
 
 
-@router.post("/update_user_geo", response_model=UserGeo)
+@router.post("/update_user_geo")
 async def update_or_create_user_geo(
     user_id: int,
     new_geo: UserGeoUpdate,
@@ -56,4 +56,16 @@ async def get_frinds_geo(
 ):
     return await get_users_friends_geo(
         token=token, session=session, user_service_url=user_service_url
+    )
+
+@router.get("/nearbyUsers")
+async def get_nearby_users(
+    token: str,
+    session: AsyncSession = Depends(db_helper.session_dependency),
+    max_distance: float = 5000,  # Максимальное расстояние в метрах
+):
+    return await crud.get_nearby_users(
+        token=token,
+        session=session,
+        max_distance=max_distance,
     )

@@ -1,3 +1,6 @@
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
@@ -8,6 +11,8 @@ from asyncio import current_task
 
 from core.config import settings
 
+
+load_dotenv()
 
 class DbHelper:
     def __init__(self, url: str, echo: bool = False):
@@ -33,6 +38,6 @@ class DbHelper:
 
 
 db_helper = DbHelper(
-    url=settings.db_url,
+    url=os.getenv("DATABASE_URL"),
     echo=settings.echo,
 )
