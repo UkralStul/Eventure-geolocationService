@@ -15,6 +15,16 @@ from ..auth import decode_access_token
 router = APIRouter(tags=["Events"])
 
 
+
+@router.get("/nearbyEvents",)
+async def get_nearby_events(
+        token: str,
+        max_distance: int,
+        session: AsyncSession = Depends(db_helper.session),
+):
+    return await get_nearby_events(session=session, token=token, max_distance=max_distance)
+
+
 @router.get("/", response_model=list[Event])
 async def get_events(
     session: AsyncSession = Depends(db_helper.session_dependency),
