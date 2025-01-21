@@ -20,7 +20,7 @@ router = APIRouter(tags=["Events"])
 async def get_nearby_events(
         token: str,
         max_distance: int,
-        session: AsyncSession = Depends(db_helper.session),
+        session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     return await get_nearby_events(session=session, token=token, max_distance=max_distance)
 
