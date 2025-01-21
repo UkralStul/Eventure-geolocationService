@@ -2,14 +2,16 @@ from datetime import datetime
 from pathlib import Path
 
 import httpx
+from geoalchemy2.shape import to_shape
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.orm.attributes import flag_modified
 
+from api_v1.auth import decode_access_token
 from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea
-from core.models import Event
-from sqlalchemy import select
+from core.models import Event, UserGeo
+from sqlalchemy import select, func
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads/avatars"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -20,6 +22,56 @@ async def get_events(session: AsyncSession) -> list[Event]:
     result: Result = await session.execute(stmt)
     events = result.scalars().all()
     return list(events)
+
+
+async def get_nearby_events(
+        session: AsyncSession,
+        token: str,
+        max_distance: int,
+        limit: int = 5,
+):
+    try:
+        user_id = decode_access_token(token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
+    # Получаем координаты текущего пользователя
+    user_geo = await session.execute(
+        select(UserGeo).where(UserGeo.user_id == user_id)
+    )
+
+    user_geo = user_geo.scalar_one_or_none()
+
+    if not user_geo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User location not found",
+        )
+
+    user_point = to_shape(user_geo.location)
+
+    query = (
+        select(
+            Event,
+            func.ST_DistanceSphere(
+                func.ST_MakePoint(Event.longitude, Event.latitude),
+                func.ST_GeomFromText(f'POINT({user_point.x} {user_point.y})', 4326),
+            ).label("distance")
+        )
+        .where(
+            func.ST_DWithin(
+                func.ST_MakePoint(Event.longitude, Event.latitude),
+                func.ST_GeomFromText(f'POINT({user_point.x} {user_point.y})', 4326),
+                max_distance
+            )
+        )
+        .order_by("distance")
+        .limit(limit)
+    )
+
+    nearby_events = await session.execute(query)
+
+    return list(nearby_events)
 
 
 async def get_event(
