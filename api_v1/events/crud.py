@@ -25,10 +25,9 @@ async def get_events(session: AsyncSession) -> list[Event]:
 
 
 async def get_nearby_events(
-        session: AsyncSession,
-        token: str,
-        max_distance: int,
-        limit: int = 5,
+    token: str,
+    session: AsyncSession,
+    max_distance: float = 5000,  # Максимальное расстояние в метрах
 ):
     try:
         user_id = decode_access_token(token)
@@ -39,7 +38,6 @@ async def get_nearby_events(
     user_geo = await session.execute(
         select(UserGeo).where(UserGeo.user_id == user_id)
     )
-
     user_geo = user_geo.scalar_one_or_none()
 
     if not user_geo:
@@ -48,28 +46,34 @@ async def get_nearby_events(
             detail="User location not found",
         )
 
-    user_point = to_shape(user_geo.location)
+    # Создаем геометрию для мероприятий "на лету"
+    event_geometry = func.ST_SetSRID(
+        func.ST_MakePoint(Event.longitude, Event.latitude),
+        4326
+    )
 
+    # Находим ближайшие мероприятия
     query = (
         select(
             Event,
             func.ST_DistanceSphere(
-                func.ST_MakePoint(Event.longitude, Event.latitude),
-                func.ST_GeomFromText(f'POINT({user_point.x} {user_point.y})', 4326),
+                event_geometry,
+                user_geo.location
             ).label("distance")
         )
         .where(
             func.ST_DWithin(
-                func.ST_MakePoint(Event.longitude, Event.latitude),
-                func.ST_GeomFromText(f'POINT({user_point.x} {user_point.y})', 4326),
+                event_geometry,
+                user_geo.location,
                 max_distance
             )
         )
         .order_by("distance")
-        .limit(limit)
+        .limit(20)
     )
 
-    nearby_events = await session.execute(query)
+    result = await session.execute(query)
+    nearby_events = result.fetchall()
 
     return list(nearby_events)
 
