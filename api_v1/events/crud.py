@@ -4,7 +4,7 @@ from typing import Optional, List
 
 import httpx
 from geoalchemy2.shape import to_shape
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from fastapi import HTTPException, status, UploadFile
@@ -32,7 +32,7 @@ class EventResponse(BaseModel):
     name: str
     description: str
     distance: float
-    participants: Optional[List[int]] = []
+    participants: Optional[List[int]] = Field(default_factory=list)
     preview_picture: Optional[str] = None
     created_by: int
 
