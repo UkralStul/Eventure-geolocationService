@@ -74,7 +74,7 @@ async def get_nearby_events(
 
     result = await session.execute(query)
     nearby_events = result.fetchall()
-
+    print(nearby_events)
     return list(nearby_events)
 
 
