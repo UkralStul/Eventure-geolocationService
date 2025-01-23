@@ -17,7 +17,7 @@ router = APIRouter(tags=["Events"])
 
 
 
-@router.get("/nearbyEvents", response_model=List[EventNearbyResponse])
+@router.post("/nearbyEvents", response_model=List[EventNearbyResponse])
 async def get_nearby_events_view(
         token: str,
         max_distance: int,
