@@ -24,11 +24,24 @@ async def get_events(session: AsyncSession) -> list[Event]:
     return list(events)
 
 
+# Pydantic модель для ответа
+class EventResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    distance: float
+    participants: Optional[List[int]] = []
+    preview_picture: Optional[str] = None
+    created_by: int
+
+    # Настройка для работы с атрибутами SQLAlchemy
+    model_config = ConfigDict(from_attributes=True)
+
 async def get_nearby_events(
     token: str,
     session: AsyncSession,
     max_distance: float = 5000,  # Максимальное расстояние в метрах
-):
+) -> List[EventResponse]:
     try:
         user_id = decode_access_token(token)
     except ValueError as e:
@@ -74,8 +87,20 @@ async def get_nearby_events(
 
     result = await session.execute(query)
     nearby_events = result.fetchall()
-    print(nearby_events)
-    return nearby_events
+
+    # Преобразуем результат в список Pydantic-моделей
+    return [
+        EventResponse(
+            id=event.id,
+            name=event.name,
+            description=event.description,
+            distance=float(distance),
+            participants=event.participants or [],
+            preview_picture=event.preview_picture,
+            created_by=event.created_by,
+        )
+        for event, distance in nearby_events
+    ]
 
 
 async def get_event(
