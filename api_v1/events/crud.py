@@ -26,7 +26,7 @@ async def get_events(session: AsyncSession) -> list[Event]:
     return list(events)
 
 
-# Pydantic модель для ответа
+
 class EventResponse(BaseModel):
     id: int
     name: str
