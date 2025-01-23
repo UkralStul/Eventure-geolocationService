@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from core.config import settings
 from . import crud
 from .crud import add_participant_to_event, save_image, get_event_preview, get_nearby_events
-from .schemas import Event, EventCreate, EventUpdate, EventsInArea, EventNearbyResponse
+from .schemas import Event, EventCreate, EventUpdate, EventsInArea, EventNearbyResponse, NearbyEventsRequest
 from core.models import db_helper
 from sqlalchemy.ext.asyncio import AsyncSession
 from .dependencies import event_by_id
@@ -19,11 +19,14 @@ router = APIRouter(tags=["Events"])
 
 @router.post("/nearbyEvents", response_model=List[EventNearbyResponse])
 async def get_nearby_events_view(
-        token: str,
-        max_distance: int,
+        request: NearbyEventsRequest,
         session: AsyncSession = Depends(db_helper.session_dependency),
 ):
-    return await get_nearby_events(session=session, token=token, max_distance=max_distance)
+    return await get_nearby_events(
+        session=session,
+        token=request.token,
+        max_distance=request.max_distance,
+    )
 
 
 @router.get("/", response_model=list[Event])

@@ -43,3 +43,7 @@ class EventNearbyResponse(BaseModel):
 
     # Настройка для работы с атрибутами SQLAlchemy
     model_config = ConfigDict(from_attributes=True)
+
+class NearbyEventsRequest(BaseModel):
+    token: str
+    max_distance: int
