@@ -1,8 +1,10 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, List
 
 import httpx
 from geoalchemy2.shape import to_shape
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from fastapi import HTTPException, status, UploadFile
