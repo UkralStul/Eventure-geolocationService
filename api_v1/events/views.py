@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
 from fastapi.responses import FileResponse
@@ -6,7 +7,7 @@ from fastapi.responses import FileResponse
 from core.config import settings
 from . import crud
 from .crud import add_participant_to_event, save_image, get_event_preview, get_nearby_events
-from .schemas import Event, EventCreate, EventUpdate, EventsInArea
+from .schemas import Event, EventCreate, EventUpdate, EventsInArea, EventNearbyResponse
 from core.models import db_helper
 from sqlalchemy.ext.asyncio import AsyncSession
 from .dependencies import event_by_id
@@ -16,7 +17,7 @@ router = APIRouter(tags=["Events"])
 
 
 
-@router.get("/nearbyEvents",)
+@router.get("/nearbyEvents", response_model=List[EventNearbyResponse])
 async def get_nearby_events_view(
         token: str,
         max_distance: int,

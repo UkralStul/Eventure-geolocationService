@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EventBase(BaseModel):
@@ -27,3 +29,17 @@ class EventsInArea(BaseModel):
     max_latitude: float
     min_longitude: float
     max_longitude: float
+
+
+
+class EventNearbyResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    distance: float
+    participants: Optional[List[int]] = Field(default_factory=list)
+    preview_picture: Optional[str] = None
+    created_by: int
+
+    # Настройка для работы с атрибутами SQLAlchemy
+    model_config = ConfigDict(from_attributes=True)

@@ -9,7 +9,7 @@ from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.orm.attributes import flag_modified
 
 from api_v1.auth import decode_access_token
-from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea
+from api_v1.events.schemas import EventCreate, EventUpdate, EventsInArea, EventNearbyResponse
 from core.models import Event, UserGeo
 from sqlalchemy import select, func
 
@@ -31,7 +31,7 @@ async def get_nearby_events(
     token: str,
     session: AsyncSession,
     max_distance: float = 5000,  # Максимальное расстояние в метрах
-) -> List[EventResponse]:
+) -> List[EventNearbyResponse]:
     try:
         user_id = decode_access_token(token)
     except ValueError as e:
@@ -77,7 +77,18 @@ async def get_nearby_events(
 
     result = await session.execute(query)
     nearby_events = result.fetchall()
-
+    return [
+        EventNearbyResponse(
+            id=event.id,
+            name=event.name,
+            description=event.description,
+            distance=float(distance),
+            participants=event.participants or [],
+            preview_picture=event.preview_picture,
+            created_by=event.created_by,
+        )
+        for event, distance in nearby_events
+    ]
 
 
 
