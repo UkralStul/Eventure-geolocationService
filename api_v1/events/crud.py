@@ -1,10 +1,8 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 import httpx
-from geoalchemy2.shape import to_shape
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
 from fastapi import HTTPException, status, UploadFile
@@ -27,17 +25,7 @@ async def get_events(session: AsyncSession) -> list[Event]:
 
 
 
-class EventResponse(BaseModel):
-    id: int
-    name: str
-    description: str
-    distance: float
-    participants: Optional[List[int]] = Field(default_factory=list)
-    preview_picture: Optional[str] = None
-    created_by: int
 
-    # Настройка для работы с атрибутами SQLAlchemy
-    model_config = ConfigDict(from_attributes=True)
 
 async def get_nearby_events(
     token: str,
@@ -90,19 +78,7 @@ async def get_nearby_events(
     result = await session.execute(query)
     nearby_events = result.fetchall()
 
-    # Преобразуем результат в список Pydantic-моделей
-    return [
-        EventResponse(
-            id=event.id,
-            name=event.name,
-            description=event.description,
-            distance=float(distance),
-            participants=event.participants or [],
-            preview_picture=event.preview_picture,
-            created_by=event.created_by,
-        )
-        for event, distance in nearby_events
-    ]
+
 
 
 async def get_event(
