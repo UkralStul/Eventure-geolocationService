@@ -55,6 +55,10 @@ async def get_nearby_events(
         4326
     )
 
+    # Конвертируем метры в градусы
+    meters_to_degrees = 111139  # approximate meters to one degree of latitude
+    max_distance_degrees = max_distance / meters_to_degrees
+
     # Находим ближайшие мероприятия
     query = (
         select(
@@ -68,7 +72,7 @@ async def get_nearby_events(
             func.ST_DWithin(
                 event_geometry,
                 user_geo.location,
-                max_distance
+                max_distance_degrees
             )
         )
         .order_by("distance")
