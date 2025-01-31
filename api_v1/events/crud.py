@@ -24,8 +24,18 @@ async def get_events(session: AsyncSession) -> list[Event]:
     return list(events)
 
 
-
-
+async def get_user_made_events(
+        session: AsyncSession,
+        token: str,
+) -> List[Event]:
+    try:
+        user_id = decode_access_token(token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    stmt = select(Event).where(Event.created_by == user_id)
+    result: Result = await session.execute(stmt)
+    events = result.scalars().all()
+    return list(events)
 
 async def get_nearby_events(
     token: str,
