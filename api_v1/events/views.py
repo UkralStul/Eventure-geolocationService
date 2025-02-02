@@ -12,6 +12,7 @@ from core.models import db_helper
 from sqlalchemy.ext.asyncio import AsyncSession
 from .dependencies import event_by_id
 from ..auth import decode_access_token
+from ..auth.auth import get_current_user
 
 router = APIRouter(tags=["Events"])
 
@@ -75,6 +76,7 @@ async def create_event(
 @router.patch("/{event_id}/")
 async def update_event(
     event_update: EventUpdate,
+    user_id: str = Depends(get_current_user),
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     return await crud.update_event(
