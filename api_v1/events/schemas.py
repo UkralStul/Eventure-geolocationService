@@ -14,7 +14,7 @@ class EventCreate(EventBase):
     created_by: int
 
 
-class EventUpdate(EventBase):
+class EventUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
 
