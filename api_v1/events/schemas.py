@@ -15,7 +15,6 @@ class EventCreate(EventBase):
 
 
 class EventUpdate(BaseModel):
-    id: int
     name: str | None = None
     description: str | None = None
 

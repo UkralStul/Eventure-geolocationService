@@ -149,8 +149,9 @@ async def create_event(session: AsyncSession, event_in: EventCreate) -> Event:
 async def update_event(
     session: AsyncSession,
     event_update: EventUpdate,
+    event_id: int,
 ) -> Event:
-    stmt = select(Event).filter(Event.id == event_update.id)
+    stmt = select(Event).filter(Event.id == event_id)
     result: Result = await session.execute(stmt)
     event = result.scalar_one_or_none()
     if not event:

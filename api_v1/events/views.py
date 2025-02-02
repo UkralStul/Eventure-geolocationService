@@ -76,6 +76,7 @@ async def create_event(
 @router.patch("/{event_id}/")
 async def update_event(
     event_update: EventUpdate,
+    event_id: int,
     user_id: str = Depends(get_current_user),
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
@@ -83,6 +84,7 @@ async def update_event(
     return await crud.update_event(
         session=session,
         event_update=event_update,
+        event_id=event_id
     )
 
 
