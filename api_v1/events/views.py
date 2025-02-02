@@ -75,12 +75,10 @@ async def create_event(
 @router.patch("/{event_id}/")
 async def update_event(
     event_update: EventUpdate,
-    event: Event = Depends(event_by_id),
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     return await crud.update_event(
         session=session,
-        event=event,
         event_update=event_update,
     )
 

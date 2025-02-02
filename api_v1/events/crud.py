@@ -148,9 +148,14 @@ async def create_event(session: AsyncSession, event_in: EventCreate) -> Event:
 
 async def update_event(
     session: AsyncSession,
-    event: Event,
     event_update: EventUpdate,
 ) -> Event:
+    stmt = select(Event).filter(Event.id == event_update.id)
+    result: Result = await session.execute(stmt)
+    event = result.scalar_one_or_none()
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
     for name, value in event_update.model_dump(exclude_unset=True).items():
         setattr(event, name, value)
     await session.commit()
