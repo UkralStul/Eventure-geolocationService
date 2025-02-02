@@ -79,6 +79,7 @@ async def update_event(
     user_id: str = Depends(get_current_user),
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
+    print(user_id)
     return await crud.update_event(
         session=session,
         event_update=event_update,
